@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Test and temporary files
+test-*.ts
+test-*.txt
+error.txt
+success.txt

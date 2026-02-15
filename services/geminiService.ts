@@ -363,9 +363,156 @@ export const getPlatformMentorResponse = async (history: any[], userMessage: str
     return response.text || "I apologize, I am experiencing a brief processing delay. How else can I assist?";
   } catch (error) {
     console.error("Gemini Platform Mentor Error:", error);
+
+    // Enhanced intelligent fallback responses
     const msg = userMessage.toLowerCase();
-    if (msg.includes('opi')) return "The **Orchestra Priority Index (OPI)** is a composite metric combining clinical risk (60%), wait time (20%), and deterioration probability (20%).";
-    return "I am the Orchestra Mentor. How can I assist you with the platform?";
+
+    // OPI-related questions
+    if (msg.includes('opi') || msg.includes('priority index')) {
+      return `# Orchestra Priority Index (OPI)
+
+The **OPI** is our core triage metric that determines patient priority across the entire platform.
+
+## Formula
+\`\`\`
+OPI = (60% × Clinical Risk) + (20% × Wait Time) + (20% × Deterioration Probability)
+\`\`\`
+
+## Components
+- **Clinical Risk (60%)**: Vital signs, symptoms, medical history
+- **Wait Time (20%)**: How long the patient has been waiting
+- **Deterioration Probability (20%)**: ML-predicted likelihood of condition worsening
+
+## Usage
+OPI scores range from 0-100 and automatically update every 30 minutes based on real-time vitals and wait time.`;
+    }
+
+    // Bed allocation questions
+    if (msg.includes('bed') && (msg.includes('allocation') || msg.includes('assign'))) {
+      return `# Bed Allocation System
+
+Our **AI-powered bed allocation** optimizes patient placement based on multiple factors:
+
+## Key Factors
+1. **Patient Acuity**: Critical patients get ICU beds automatically
+2. **Isolation Requirements**: Contagion scores trigger isolation protocols
+3. **Department Matching**: Patients routed to specialty departments
+4. **Bed Availability**: Real-time tracking of all bed statuses
+
+## Automation
+The system automatically suggests optimal bed assignments when a patient is admitted, considering proximity to nursing stations for high-risk patients.`;
+    }
+
+    // Contagion score questions
+    if (msg.includes('contagion') || msg.includes('isolation')) {
+      return `# Contagion Scoring
+
+The **Contagion Score** determines isolation requirements and infection control protocols.
+
+## Scoring Criteria
+- Respiratory symptoms + fever = High contagion risk
+- Known infectious disease history = Automatic isolation flag
+- Recent travel to endemic areas = Elevated score
+
+## Triggered Actions
+- **Score > 70**: Automatic isolation bed assignment
+- **Score 40-70**: Droplet precautions recommended
+- **Score < 40**: Standard precautions
+
+The system integrates with bed management to allocate isolation rooms when needed.`;
+    }
+
+    // ER features questions
+    if (msg.includes('er') || msg.includes('emergency') || msg.includes('features')) {
+      return `# Emergency Room Features
+
+## Core ER Capabilities
+1. **Real-Time Triage**: Automated OPI calculation on patient arrival
+2. **Voice Symptom Input**: AI-powered speech-to-triage conversion
+3. **Critical Alerts**: Automatic escalation for chest pain, stroke symptoms
+4. **Resource Intelligence**: Track oxygen, blood, ICU bed availability
+
+## Workflow Automation
+- **Fast-track for Low Acuity**: Automated routing for minor cases
+- **Trauma Protocols**: One-click activation of trauma teams
+- **Pre-hospital Integration**: GPS tracking of incoming ambulances
+
+The system is designed for sub-1-minute triage times in high-volume scenarios.`;
+    }
+
+    // API/External sync questions
+    if (msg.includes('api') || msg.includes('external') || msg.includes('sync') || msg.includes('integration')) {
+      return `# External API Integration
+
+## Available APIs
+1. **Hospital Network API**: Real-time bed availability across external hospitals
+2. **Lab Integration**: Bidirectional sync for test orders and results
+3. **Insurance Verification**: Real-time eligibility checks
+4. **EHR Sync**: HL7/FHIR-compliant data exchange
+
+## Implementation
+Use our RESTful API endpoints with OAuth 2.0 authentication. The platform supports webhooks for real-time updates.
+
+## Rate Limits
+- Standard tier: 1000 req/hour
+- Enterprise: Unlimited with SLA
+
+Documentation available at \`/api/docs\` when running locally.`;
+    }
+
+    // Surgery/OT questions
+    if (msg.includes('surgery') || msg.includes('ot') || msg.includes('operating') || msg.includes('theatre')) {
+      return `# Surgical Orchestration
+
+## OT Management Features
+1. **AI Scheduling**: Optimizes theatre utilization using ML
+2. **Pre-op Readiness**: Tracks patient preparation status
+3. **Resource Allocation**: Manages surgical teams, equipment
+4. **Efficiency Audits**: Real-time bottleneck detection
+
+## Intelligence Layer
+The system calculates expected surgery duration, accounts for cleaning time, and suggests optimal patient-to-theatre assignments to maximize throughput while maintaining quality standards.`;
+    }
+
+    // Architecture/Development questions
+    if (mode === 'dev' || msg.includes('architecture') || msg.includes('tech') || msg.includes('stack')) {
+      return `# Platform Architecture
+
+## Tech Stack
+- **Frontend**: Vite + React + TypeScript + Tailwind CSS
+- **AI Layer**: Google Gemini API for reasoning & documentation
+- **State Management**: React hooks + localStorage
+- **Real-time**: WebSocket support for live updates
+
+## Design Patterns
+- **Module-based**: Each feature is a self-contained component
+- **Service Layer**: All AI logic abstracted to \`geminiService.ts\`
+- **Type-safe**: Full TypeScript coverage
+
+## Key Files
+- \`App.tsx\`: Main orchestration logic
+- \`services/geminiService.ts\`: AI integration layer
+- \`components/\`: Feature modules (Triage, OT, Finance, etc.)`;
+    }
+
+    // Default helpful response
+    return `# Platform Mentor Active
+
+I'm your **Orchestra Health Platform Mentor** in **${mode.toUpperCase()}** mode.
+
+## I can help with:
+- **OPI & Triage**: How our priority scoring works
+- **Bed Allocation**: Smart patient placement algorithms
+- **ER Workflows**: Emergency department features
+- **Surgery Orchestration**: OT scheduling and optimization
+- **System Architecture**: Tech stack and design patterns
+- **API Integration**: External system connections
+
+**Ask me anything about the platform!** Try questions like:
+- "Explain bed allocation"
+- "How does contagion score work?"
+- "What ER features are available?"
+- "Tell me about the tech stack"`;
   }
 };
 
@@ -375,7 +522,7 @@ export const getPlatformMentorResponse = async (history: any[], userMessage: str
 export const getTriageChatResponse = async (history: any[], userMessage: string): Promise<string> => {
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'models/gemini-2.5-flash',
       contents: userMessage,
       config: {
         systemInstruction: "You are the Orchestra Virtual Triage Assistant. Provide clinical guidance. Always prioritize life-saving alerts if chest pain or stroke symptoms are mentioned.",
@@ -397,7 +544,7 @@ export const generateComplianceReport = async (logs: AuditLog[]): Promise<string
   try {
     const logSummary = logs.map(l => `[${l.timestamp}] ${l.action}: ${l.details}`).join('\n');
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'models/gemini-2.5-flash',
       contents: `Synthesize a HIPAA compliance audit summary from these logs:\n\n${logSummary}`,
       config: {
         systemInstruction: "You are a professional healthcare compliance auditor.",
