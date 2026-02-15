@@ -137,7 +137,7 @@ export const generateClinicalDocumentation = async (patient: Patient, type: stri
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "models/gemini-2.5-flash",
       contents: prompt,
       config: {
         systemInstruction: "You are an expert hospital scribe generating documentation for a top-tier medical orchestration platform. Output clear, well-structured clinical notes.",
@@ -352,7 +352,7 @@ export const getOTEfficiencyAudit = async (ots: OT[], patients: Patient[]): Prom
 export const getPlatformMentorResponse = async (history: any[], userMessage: string, mode: string): Promise<string> => {
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-pro',
+      model: 'models/gemini-2.5-flash',
       contents: userMessage,
       config: {
         systemInstruction: `You are the Orchestra Health Platform Mentor in ${mode} mode. 
