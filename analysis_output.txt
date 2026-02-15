@@ -1,0 +1,44 @@
+﻿================================================================================
+COMPLETE DATASET ANALYSIS
+================================================================================
+
+1. SHAPE: 5000 rows ╫ 8 columns
+
+2. COLUMNS:
+   1. Patient_ID
+   2. Age
+   3. Gender
+   4. Symptoms
+   5. Blood Pressure
+   6. Heart Rate
+   7. Temperature
+   8. Pre-Existing Conditions
+
+3. DATA TYPES:
+Patient_ID                  object
+Age                          int64
+Gender                      object
+Symptoms                    object
+Blood Pressure              object
+Heart Rate                   int64
+Temperature                float64
+Pre-Existing Conditions     object
+dtype: object
+
+4. MISSING VALUES:
+Pre-Existing Conditions    2130
+dtype: int64
+
+5. SAMPLE DATA (first 3 rows):
+  Patient_ID  Age  Gender                        Symptoms Blood Pressure  Heart Rate  Temperature Pre-Existing Conditions
+0    RP00001   53    Male       Body Ache, Fever, Fatigue         104/68         101         39.4                     NaN
+1    RP00002   42  Female                           Fever         106/72          96         39.0                     NaN
+2    RP00003   56  Female  Dizziness, Shortness of Breath        130/104          95         37.5                  Asthma
+
+6. UNIQUE VALUE COUNTS PER COLUMN:
+
+   Patient_ID: 5000 unique values
+
+   Age: 90 unique values
+
+   Gender: 2 unique values

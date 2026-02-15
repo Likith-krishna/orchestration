@@ -1,0 +1,9 @@
+{
+  "name": "AI Clinical Triage & Hospital Orchestration Platform",
+  "description": "An enterprise-grade hospital management system featuring AI-powered triage, department routing, bed management, and real-time clinical orchestration.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
