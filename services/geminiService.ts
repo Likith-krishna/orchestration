@@ -3,7 +3,7 @@ import { Patient, RiskLevel, Department, ExternalHospital, OT, AuditLog, Resourc
 import { GoogleGenAI } from "@google/genai";
 
 // Initialize Google GenAI client
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 // --- CONTRACT INTERFACES (FROZEN) ---
 
@@ -137,7 +137,7 @@ export const generateClinicalDocumentation = async (patient: Patient, type: stri
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: "gemini-1.5-flash",
       contents: prompt,
       config: {
         systemInstruction: "You are an expert hospital scribe generating documentation for a top-tier medical orchestration platform. Output clear, well-structured clinical notes.",
@@ -146,7 +146,7 @@ export const generateClinicalDocumentation = async (patient: Patient, type: stri
 
     const content = response.text || "Automatic transcription failed. Please check clinician manual input.";
     const dept = patient.department || Department.GENERAL_MEDICINE;
-    const billing = CLINICAL_KNOWLEDGE_BASE.billing[dept];
+    const billing = CLINICAL_KNOWLEDGE_BASE.billing[dept] || CLINICAL_KNOWLEDGE_BASE.billing[Department.GENERAL_MEDICINE];
 
     return {
       title: `${type.toUpperCase()} SUMMARY - ${patient.id}`,
@@ -154,6 +154,7 @@ export const generateClinicalDocumentation = async (patient: Patient, type: stri
       icdCodes: [{ code: 'R07.9', description: 'Differential: Undifferentiated complaint' }],
       billingCodes: billing.codes.map(c => ({ ...c, estAmount: c.amt }))
     };
+
   } catch (error) {
     console.error("Documentation Generation Error:", error);
     // Graceful fallback logic
@@ -171,7 +172,7 @@ export const analyzeTriageData = async (patient: Patient): Promise<TriageRespons
 
   let riskPoints = 0;
   const v = patient.vitals;
-  
+
   if (v.temp > 38.5 || v.temp < 36.0) riskPoints += 20;
   if (v.spo2 < 94) riskPoints += 30;
   if (v.bp_sys > 160 || v.bp_sys < 90) riskPoints += 25;
@@ -180,8 +181,8 @@ export const analyzeTriageData = async (patient: Patient): Promise<TriageRespons
 
   const score = Math.min(100, riskPoints);
   const level = score > 75 ? RiskLevel.CRITICAL : score > 50 ? RiskLevel.HIGH : score > 25 ? RiskLevel.MEDIUM : RiskLevel.LOW;
-  
-  const matches = CLINICAL_KNOWLEDGE_BASE.diagnoses.filter(d => 
+
+  const matches = CLINICAL_KNOWLEDGE_BASE.diagnoses.filter(d =>
     patient.symptoms.some(s => d.keywords.some(k => s.toLowerCase().includes(k)))
   );
 
@@ -197,7 +198,7 @@ export const analyzeTriageData = async (patient: Patient): Promise<TriageRespons
     primaryDepartment: primaryDept,
     reasoning: `Score of ${score} derived from vital instabilities. Primary concern: ${matches[0]?.name || 'Undifferentiated acute illness'}.`,
     redFlags: score > 70 ? ['Hemodynamic Instability', 'Respiratory Distress'] : [],
-    suggestedDiagnoses: matches.length > 0 
+    suggestedDiagnoses: matches.length > 0
       ? matches.map(m => ({ name: m.name, probability: 85, rationale: 'Clinical symptom cluster match.' }))
       : [{ name: 'Nonspecific Viral Syndrome', probability: 40, rationale: 'Default broad classification.' }],
     estLengthOfStay: level === RiskLevel.CRITICAL ? 7 : 2,
@@ -209,9 +210,9 @@ export const analyzeTriageData = async (patient: Patient): Promise<TriageRespons
 
 export const generateClinicalCopilotData = async (patient: Patient): Promise<CopilotAnalysis> => {
   await new Promise(r => setTimeout(r, 1000));
-  
+
   const mainSymptom = patient.symptoms[0] || 'Unspecified complaint';
-  const match = CLINICAL_KNOWLEDGE_BASE.diagnoses.find(d => 
+  const match = CLINICAL_KNOWLEDGE_BASE.diagnoses.find(d =>
     d.keywords.some(k => mainSymptom.toLowerCase().includes(k))
   );
 
@@ -236,12 +237,12 @@ export const generateClinicalCopilotData = async (patient: Patient): Promise<Cop
 
 export const generateFinancialAudit = async (patients: Patient[]): Promise<FinancialAudit> => {
   await new Promise(r => setTimeout(r, 1000));
-  
+
   const totalPotential = patients.reduce((sum, p) => sum + (p.estTreatmentCost || 0), 0);
   const unbilled = patients
     .filter(p => p.insurance?.status !== 'Verified')
     .reduce((sum, p) => sum + (p.estTreatmentCost || 0), 0);
-  
+
   const verifiedCount = patients.filter(p => p.insurance?.status === 'Verified').length;
   const integrityScore = Math.round((verifiedCount / Math.max(1, patients.length)) * 100);
 
@@ -278,13 +279,13 @@ export const createLiaisonRequest = async (patient: Patient): Promise<LiaisonReq
 };
 
 export const analyzeVoiceTriage = async (
-  transcription: string, 
+  transcription: string,
   metadata: { rate: string, tremor: boolean, hesitations: number }
 ): Promise<VoiceTriageAnalysis> => {
   await new Promise(r => setTimeout(r, 1200));
   const text = transcription.toLowerCase();
   const symptoms = [];
-  for(const d of CLINICAL_KNOWLEDGE_BASE.diagnoses) {
+  for (const d of CLINICAL_KNOWLEDGE_BASE.diagnoses) {
     if (d.keywords.some(k => text.includes(k))) symptoms.push(d.name);
   }
   const stressMap: Record<string, 'Low' | 'Moderate' | 'High'> = { 'Rapid': 'High', 'Normal': 'Low', 'Slow': 'Moderate' };
@@ -306,7 +307,7 @@ export const analyzeVoiceTriage = async (
 export const calculateOptimalHospital = async (patient: Patient, hospitals: ExternalHospital[], resource?: string): Promise<OptimalHospitalResponse> => {
   await new Promise(r => setTimeout(r, 500));
   const ranked = hospitals.map(h => {
-    let score = h.travelTimeMins * 2; 
+    let score = h.travelTimeMins * 2;
     score += (h.loadScore / 10);
     if (resource === 'ICU' && h.icuBedsAvailable === 0) score += 1000;
     return { ...h, score };
@@ -351,7 +352,7 @@ export const getOTEfficiencyAudit = async (ots: OT[], patients: Patient[]): Prom
 export const getPlatformMentorResponse = async (history: any[], userMessage: string, mode: string): Promise<string> => {
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-1.5-pro',
       contents: userMessage,
       config: {
         systemInstruction: `You are the Orchestra Health Platform Mentor in ${mode} mode. 
@@ -374,7 +375,7 @@ export const getPlatformMentorResponse = async (history: any[], userMessage: str
 export const getTriageChatResponse = async (history: any[], userMessage: string): Promise<string> => {
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: userMessage,
       config: {
         systemInstruction: "You are the Orchestra Virtual Triage Assistant. Provide clinical guidance. Always prioritize life-saving alerts if chest pain or stroke symptoms are mentioned.",
@@ -396,7 +397,7 @@ export const generateComplianceReport = async (logs: AuditLog[]): Promise<string
   try {
     const logSummary = logs.map(l => `[${l.timestamp}] ${l.action}: ${l.details}`).join('\n');
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: `Synthesize a HIPAA compliance audit summary from these logs:\n\n${logSummary}`,
       config: {
         systemInstruction: "You are a professional healthcare compliance auditor.",
