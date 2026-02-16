@@ -2,7 +2,7 @@
 
 An advanced, AI-powered healthcare orchestration system designed to optimize patient flow, resource allocation, and clinical decision-making in real-time. This platform integrates predictive analytics, real-time monitoring, and intelligent automation to streamline hospital operations.
 
-![Platform Dashboard](https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6)
+
 
 ## 🚀 Key Features
 
